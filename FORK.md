@@ -144,3 +144,24 @@ OS 兜底脚本启动后先判断，**有成功备份就直接退出**：
 可移植的配置项（可以安全地写进声明式层）：
 `keep` / `exclude` / `watchConfig` / `debounceSeconds` / `changeKeep` / `stableBaselineMinutes` / `osMinIntervalHours` / `enableSystemTask` / `keepTaskOnUninstall`。
 
+
+## 12. 已知问题：OS 计划任务会弹控制台窗（2026-11-12）
+
+任务计划器以交互用户身份启动 node.exe（控制台程序），每小时必然闪现一个窗口，
+Hidden 设置不可靠（conhost 仍会创建）。**默认推荐：关闭 enableSystemTask，只用宿主内定时。**
+
+若确需「DSH 关闭也备份」且能容忍弹窗（或用 wscript 隐藏包装器），再开启该开关。
+
+## 13. 教训：destination 的落位要闭环（2026-11-02 → 11-12）
+
+11-02 为可移植性把 destination 从 profile 条目移除、依赖用户在面板设置——但移除后
+没有任何机器实际设置过它，下次重启后备份目录悄悄回落到包默认值（~/Desktop/...），
+auto 状态跟着目录走变成未开启，造成 10 天无宿主备份（只有 OS 兜底在跑）。
+
+正确分层（现已如此落地）：
+- **包**：默认值保持可移植（~/Desktop/DSH Backups），不含机器路径；
+- **每台机器的 profile 条目 config**（面板写的就是这个位置）：必须显式设置本机目录，
+  装完插件的初始化清单里这是第一步；
+- 面板设置项即持久层，改完热生效；备份状态（auto.json）与目录绑定，换目录等于换状态。
+
+多机安装后务必检查：设置 → 备份 → 状态里的目录是否正确、auto 是否已开启。
